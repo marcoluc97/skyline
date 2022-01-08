@@ -16,6 +16,6 @@ class SkylineApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         System.loadLibrary("skyline")
-        initializeLog(applicationContext.filesDir.canonicalPath + "/", getSettings().logLevel.toInt())
+        initializeLog(applicationContext.filesDir.canonicalPath + "/", getSettings().logLevel)
     }
 }
