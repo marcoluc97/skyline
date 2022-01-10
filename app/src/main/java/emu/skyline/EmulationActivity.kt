@@ -22,7 +22,7 @@ import emu.skyline.databinding.EmuActivityBinding
 import emu.skyline.input.*
 import emu.skyline.loader.getRomFormat
 import emu.skyline.utils.Settings
-import java.io.File
+import emu.skyline.utils.SettingsValues
 import javax.inject.Inject
 import kotlin.math.abs
 
@@ -68,11 +68,11 @@ class EmulationActivity : AppCompatActivity(), SurfaceHolder.Callback, View.OnTo
      * @param romUri The URI of the ROM as a string, used to print out in the logs
      * @param romType The type of the ROM as an enum value
      * @param romFd The file descriptor of the ROM object
-     * @param preferenceFd The file descriptor of the Preference XML
+     * @param settingsValues The SettingsValues instance
      * @param appFilesPath The full path to the app files directory
      * @param assetManager The asset manager used for accessing app assets
      */
-    private external fun executeApplication(romUri : String, romType : Int, romFd : Int, preferenceFd : Int, language : Int, appFilesPath : String, assetManager : AssetManager)
+    private external fun executeApplication(romUri : String, romType : Int, romFd : Int, settingsValues : SettingsValues, appFilesPath : String, assetManager : AssetManager)
 
     /**
      * @param join If the function should only return after all the threads join or immediately
@@ -208,10 +208,9 @@ class EmulationActivity : AppCompatActivity(), SurfaceHolder.Callback, View.OnTo
         val rom = intent.data!!
         val romType = getRomFormat(rom, contentResolver).ordinal
         val romFd = contentResolver.openFileDescriptor(rom, "r")!!
-        val preferenceFd = ParcelFileDescriptor.open(File("${applicationInfo.dataDir}/shared_prefs/${applicationInfo.packageName}_preferences.xml"), ParcelFileDescriptor.MODE_READ_WRITE)
 
         emulationThread = Thread {
-            executeApplication(rom.toString(), romType, romFd.detachFd(), preferenceFd.detachFd(), settings.systemLanguage, applicationContext.filesDir.canonicalPath + "/", assets)
+            executeApplication(rom.toString(), romType, romFd.detachFd(), SettingsValues(settings), applicationContext.filesDir.canonicalPath + "/", assets)
             returnFromEmulation()
         }
 

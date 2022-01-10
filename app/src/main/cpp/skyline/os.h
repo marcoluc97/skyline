@@ -19,7 +19,6 @@ namespace skyline::kernel {
         std::string deviceTimeZone; //!< The timezone name (e.g. Europe/London)
         std::shared_ptr<vfs::FileSystem> assetFileSystem; //!< A filesystem to be used for accessing emulator assets (like tzdata)
         service::ServiceManager serviceManager;
-        language::SystemLanguage systemLanguage;
 
         /**
          * @param settings An instance of the Settings class
@@ -30,7 +29,6 @@ namespace skyline::kernel {
             std::shared_ptr<Settings> &settings,
             std::string appFilesPath,
             std::string deviceTimeZone,
-            language::SystemLanguage systemLanguage,
             std::shared_ptr<vfs::FileSystem> assetFileSystem
         );
 

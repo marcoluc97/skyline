@@ -18,14 +18,12 @@ namespace skyline::kernel {
         std::shared_ptr<Settings> &settings,
         std::string appFilesPath,
         std::string deviceTimeZone,
-        language::SystemLanguage systemLanguage,
         std::shared_ptr<vfs::FileSystem> assetFileSystem)
         : state(this, jvmManager, settings),
           appFilesPath(std::move(appFilesPath)),
           deviceTimeZone(std::move(deviceTimeZone)),
           assetFileSystem(std::move(assetFileSystem)),
-          serviceManager(state),
-          systemLanguage(systemLanguage) {}
+          serviceManager(state) {}
 
     void OS::Execute(int romFd, loader::RomFormat romType) {
         auto romFile{std::make_shared<vfs::OsBacking>(romFd)};
