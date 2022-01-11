@@ -21,7 +21,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import emu.skyline.databinding.EmuActivityBinding
 import emu.skyline.input.*
 import emu.skyline.loader.getRomFormat
-import emu.skyline.utils.Settings
+import emu.skyline.utils.PreferenceSettings
 import emu.skyline.utils.SettingsValues
 import javax.inject.Inject
 import kotlin.math.abs
@@ -57,7 +57,7 @@ class EmulationActivity : AppCompatActivity(), SurfaceHolder.Callback, View.OnTo
     var returnToMain : Boolean = false
 
     @Inject
-    lateinit var settings : Settings
+    lateinit var preferenceSettings : PreferenceSettings
 
     @Inject
     lateinit var inputManager : InputManager
@@ -153,7 +153,7 @@ class EmulationActivity : AppCompatActivity(), SurfaceHolder.Callback, View.OnTo
             if (controller.type != ControllerType.None) {
                 val type = when (controller.type) {
                     ControllerType.None -> throw IllegalArgumentException()
-                    ControllerType.HandheldProController -> if (settings.isDocked) ControllerType.ProController.id else ControllerType.HandheldProController.id
+                    ControllerType.HandheldProController -> if (preferenceSettings.isDocked) ControllerType.ProController.id else ControllerType.HandheldProController.id
                     ControllerType.ProController, ControllerType.JoyConLeft, ControllerType.JoyConRight -> controller.type.id
                 }
 
@@ -210,7 +210,7 @@ class EmulationActivity : AppCompatActivity(), SurfaceHolder.Callback, View.OnTo
         val romFd = contentResolver.openFileDescriptor(rom, "r")!!
 
         emulationThread = Thread {
-            executeApplication(rom.toString(), romType, romFd.detachFd(), SettingsValues(settings), applicationContext.filesDir.canonicalPath + "/", assets)
+            executeApplication(rom.toString(), romType, romFd.detachFd(), SettingsValues(preferenceSettings), applicationContext.filesDir.canonicalPath + "/", assets)
             returnFromEmulation()
         }
 
@@ -235,14 +235,14 @@ class EmulationActivity : AppCompatActivity(), SurfaceHolder.Callback, View.OnTo
         binding.gameView.holder.addCallback(this)
 
         binding.gameView.setAspectRatio(
-            when (settings.aspectRatio) {
+            when (preferenceSettings.aspectRatio) {
                 0 -> Rational(16, 9)
                 1 -> Rational(21, 9)
                 else -> null
             }
         )
 
-        if (settings.perfStats) {
+        if (preferenceSettings.perfStats) {
             binding.perfStats.apply {
                 postDelayed(object : Runnable {
                     override fun run() {
@@ -255,7 +255,7 @@ class EmulationActivity : AppCompatActivity(), SurfaceHolder.Callback, View.OnTo
         }
 
         @Suppress("DEPRECATION") val display = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) display!! else windowManager.defaultDisplay
-        if (settings.maxRefreshRate)
+        if (preferenceSettings.maxRefreshRate)
             display?.supportedModes?.maxByOrNull { it.refreshRate * it.physicalHeight * it.physicalWidth }?.let { window.attributes.preferredDisplayModeId = it.modeId }
         else
             display?.supportedModes?.minByOrNull { abs(it.refreshRate - 60f) }?.let { window.attributes.preferredDisplayModeId = it.modeId }
@@ -266,11 +266,11 @@ class EmulationActivity : AppCompatActivity(), SurfaceHolder.Callback, View.OnTo
         binding.onScreenControllerView.apply {
             inputManager.controllers[0]!!.type.let {
                 controllerType = it
-                isGone = it == ControllerType.None || !settings.onScreenControl
+                isGone = it == ControllerType.None || !preferenceSettings.onScreenControl
             }
             setOnButtonStateChangedListener(::onButtonStateChanged)
             setOnStickStateChangedListener(::onStickStateChanged)
-            recenterSticks = settings.onScreenControlRecenterSticks
+            recenterSticks = preferenceSettings.onScreenControlRecenterSticks
         }
 
         binding.onScreenControllerToggle.apply {

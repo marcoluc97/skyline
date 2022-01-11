@@ -35,7 +35,7 @@ import emu.skyline.databinding.MainActivityBinding
 import emu.skyline.loader.AppEntry
 import emu.skyline.loader.LoaderResult
 import emu.skyline.loader.RomFormat
-import emu.skyline.utils.Settings
+import emu.skyline.utils.PreferenceSettings
 import javax.inject.Inject
 import kotlin.math.ceil
 
@@ -49,11 +49,11 @@ class MainActivity : AppCompatActivity() {
     private val binding by lazy { MainActivityBinding.inflate(layoutInflater) }
 
     @Inject
-    lateinit var settings : Settings
+    lateinit var preferenceSettings : PreferenceSettings
 
     private val adapter = GenericAdapter()
 
-    private val layoutType get() = LayoutType.values()[settings.layoutType]
+    private val layoutType get() = LayoutType.values()[preferenceSettings.layoutType]
 
     private val missingIcon by lazy { ContextCompat.getDrawable(this, R.drawable.default_icon)!!.toBitmap(256, 256) }
 
@@ -76,14 +76,14 @@ class MainActivity : AppCompatActivity() {
     private val documentPicker = registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) {
         it?.let { uri ->
             contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            settings.searchLocation = uri.toString()
+            preferenceSettings.searchLocation = uri.toString()
 
             loadRoms(false)
         }
     }
 
     private val settingsCallback = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-        if (settings.refreshRequired) loadRoms(false)
+        if (preferenceSettings.refreshRequired) loadRoms(false)
     }
 
     private fun AppItem.toViewItem() = AppViewItem(layoutType, this, missingIcon, ::selectStartGame, ::selectShowGameDialog)
@@ -91,7 +91,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState : Bundle?) {
         // Need to create new instance of settings, dependency injection happens
         AppCompatDelegate.setDefaultNightMode(
-            when ((Settings(this).appTheme)) {
+            when ((PreferenceSettings(this).appTheme)) {
                 0 -> AppCompatDelegate.MODE_NIGHT_NO
                 1 -> AppCompatDelegate.MODE_NIGHT_YES
                 2 -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
@@ -105,8 +105,8 @@ class MainActivity : AppCompatActivity() {
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false)
 
         adapter.apply {
-            setHeaderItems(listOf(HeaderRomFilterItem(formatOrder, if (settings.romFormatFilter == 0) null else formatOrder[settings.romFormatFilter - 1]) { romFormat ->
-                settings.romFormatFilter = romFormat?.let { formatOrder.indexOf(romFormat) + 1 } ?: 0
+            setHeaderItems(listOf(HeaderRomFilterItem(formatOrder, if (preferenceSettings.romFormatFilter == 0) null else formatOrder[preferenceSettings.romFormatFilter - 1]) { romFormat ->
+                preferenceSettings.romFormatFilter = romFormat?.let { formatOrder.indexOf(romFormat) + 1 } ?: 0
                 formatFilter = romFormat
                 populateAdapter()
             }))
@@ -126,7 +126,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         viewModel.stateData.observe(this, ::handleState)
-        loadRoms(!settings.refreshRequired)
+        loadRoms(!preferenceSettings.refreshRequired)
 
         binding.searchBar.apply {
             binding.logIcon.setOnClickListener {
@@ -241,7 +241,7 @@ class MainActivity : AppCompatActivity() {
         binding.appList.layoutManager = CustomLayoutManager(gridSpan)
         setAppListDecoration()
 
-        if (settings.searchLocation.isEmpty()) documentPicker.launch(null)
+        if (preferenceSettings.searchLocation.isEmpty()) documentPicker.launch(null)
     }
 
     private fun getDataItems() = mutableListOf<DataItem>().apply {
@@ -275,7 +275,7 @@ class MainActivity : AppCompatActivity() {
     private fun selectStartGame(appItem : AppItem) {
         if (binding.swipeRefreshLayout.isRefreshing) return
 
-        if (settings.selectAction) {
+        if (preferenceSettings.selectAction) {
             AppDialog.newInstance(appItem).show(supportFragmentManager, "game")
         } else if (appItem.loaderResult == LoaderResult.Success) {
             startActivity(Intent(this, EmulationActivity::class.java).apply { data = appItem.uri; putExtra(EmulationActivity.ReturnToMainTag, true) })
@@ -289,8 +289,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun loadRoms(loadFromFile : Boolean) {
-        viewModel.loadRoms(loadFromFile, Uri.parse(settings.searchLocation), settings.systemLanguage)
-        settings.refreshRequired = false
+        viewModel.loadRoms(loadFromFile, Uri.parse(preferenceSettings.searchLocation), preferenceSettings.systemLanguage)
+        preferenceSettings.refreshRequired = false
     }
 
     private fun populateAdapter() {
