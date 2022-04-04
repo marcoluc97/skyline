@@ -4,6 +4,7 @@
 #pragma once
 
 #include "common.h"
+#include "applet/swkbd/software_keyboard_config.h"
 #include <jni.h>
 
 namespace skyline {
@@ -140,6 +141,15 @@ namespace skyline {
         void ClearVibrationDevice(jint index);
 
         /**
+
+         * @brief Display an alert dialog with a text field
+         * @return A pointer to the dialog
+         */
+        jobject ShowKeyboard(service::applet::swkbd::KeyboardConfigVB& config, std::u16string initial_text);
+        std::u16string GetKeyboardText(jobject keyboardDialog);
+        void HideKeyboard(jobject keyboardDialog);
+
+        /**
          * @brief A call to EmulationActivity.getVersionCode in Kotlin
          * @return A version code in Vulkan's format with 14-bit patch + 10-bit major and minor components
          */
@@ -149,6 +159,9 @@ namespace skyline {
         jmethodID initializeControllersId;
         jmethodID vibrateDeviceId;
         jmethodID clearVibrationDeviceId;
+        jmethodID showKeyboardId;
+        jmethodID getKeyboardTextId;
+        jmethodID hideKeyboardId;
         jmethodID getVersionCodeId;
     };
 }

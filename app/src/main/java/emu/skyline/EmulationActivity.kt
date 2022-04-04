@@ -17,12 +17,19 @@ import android.view.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isGone
 import androidx.core.view.isInvisible
+import androidx.fragment.app.FragmentTransaction
 import dagger.hilt.android.AndroidEntryPoint
+import emu.skyline.applet.swkbd.SoftwareKeyboardConfig
+import emu.skyline.applet.swkbd.SoftwareKeyboardDialog
 import emu.skyline.databinding.EmuActivityBinding
 import emu.skyline.input.*
 import emu.skyline.loader.getRomFormat
+import emu.skyline.utils.ByteBufferSerializable
 import emu.skyline.utils.PreferenceSettings
 import emu.skyline.utils.SettingsValues
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
+import java.util.concurrent.FutureTask
 import javax.inject.Inject
 import kotlin.math.abs
 
@@ -511,6 +518,89 @@ class EmulationActivity : AppCompatActivity(), SurfaceHolder.Callback, View.OnTo
     @Suppress("unused")
     fun clearVibrationDevice(index : Int) {
         vibrators[index]?.cancel()
+    }
+
+
+    @Suppress("unused")
+    fun requestTextInput(buff : ByteBuffer) : String {
+        buff.order(ByteOrder.LITTLE_ENDIAN)
+        val a = SoftwareKeyboardConfig()
+        try {
+            val b = ByteBufferSerializable.createFromByteBuffer(SoftwareKeyboardConfig::class, buff) as SoftwareKeyboardConfig
+            buff.rewind()
+            a.setFromByteBuffer(buff)
+            if(a == b) {
+                a.guideText
+            }
+            buff.rewind()
+            a.writeToByteBuffer(buff)
+        } catch (e : Exception) {
+            return e.message ?: "Fuck"
+        }
+        //val futureResult : FutureTask<String> = FutureTask<String> { return@FutureTask keyboardBinding.keyboardInput.text.toString() }
+        runOnUiThread {
+            val fragmentManager = supportFragmentManager
+            val newFragment = SoftwareKeyboardDialog()
+            val transaction = fragmentManager.beginTransaction()
+            // For a little polish, specify a transition animation
+            transaction.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
+            // To make it fullscreen, use the 'content' root view as the container
+            // for the fragment, which is always the root view for the activity
+            transaction
+                .add(android.R.id.content, newFragment)
+                .addToBackStack(null)
+                .commit()
+
+
+
+        }
+        return "pog"
+
+    }
+
+    @Suppress("unused")
+    fun showKeyboard(buff : ByteBuffer, initialText : String) : SoftwareKeyboardDialog? {
+        buff.order(ByteOrder.LITTLE_ENDIAN)
+        val a = SoftwareKeyboardConfig()
+        try {
+            val b = ByteBufferSerializable.createFromByteBuffer(SoftwareKeyboardConfig::class, buff) as SoftwareKeyboardConfig
+            buff.rewind()
+            a.setFromByteBuffer(buff)
+            if(a == b) {
+                a.guideText
+            }
+            buff.rewind()
+            a.writeToByteBuffer(buff)
+        } catch (e : Exception) {
+            return null
+        }
+        //val futureResult : FutureTask<String> = FutureTask<String> { return@FutureTask keyboardBinding.keyboardInput.text.toString() }
+        val keyboardDialog = SoftwareKeyboardDialog()
+        runOnUiThread {
+            val fragmentManager = supportFragmentManager
+
+            val transaction = fragmentManager.beginTransaction()
+            // For a little polish, specify a transition animation
+            transaction.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
+            // To make it fullscreen, use the 'content' root view as the container
+            // for the fragment, which is always the root view for the activity
+            transaction
+                .add(android.R.id.content, keyboardDialog)
+                .addToBackStack(null)
+                .commit()
+        }
+        return keyboardDialog
+
+    }
+
+    @Suppress("unused")
+    fun getKeyboardText(dialog: SoftwareKeyboardDialog) : String {
+        return dialog.waitForButton()
+    }
+
+    @Suppress("unused")
+    fun hideKeyboard(dialog: SoftwareKeyboardDialog) {
+        runOnUiThread {dialog.dismiss()}
     }
 
     /**

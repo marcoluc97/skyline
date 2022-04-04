@@ -264,6 +264,9 @@ add_library(skyline SHARED
         ${source_DIR}/skyline/services/ssl/ISslContext.cpp
         ${source_DIR}/skyline/services/prepo/IPrepoService.cpp
         ${source_DIR}/skyline/services/mmnv/IRequest.cpp
+        ${source_DIR}/skyline/services/applet/applet_creator.cpp
+        ${source_DIR}/skyline/applet/swkbd/software_keyboard_applet.cpp
+        ${source_DIR}/skyline/applet/swkbd/software_keyboard_config.cpp
         )
 target_include_directories(skyline PRIVATE ${source_DIR}/skyline)
 # target_precompile_headers(skyline PRIVATE ${source_DIR}/skyline/common.h) # PCH will currently break Intellisense

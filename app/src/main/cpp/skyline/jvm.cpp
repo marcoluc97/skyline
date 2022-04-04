@@ -2,6 +2,7 @@
 // Copyright © 2020 Skyline Team and Contributors (https://github.com/skyline-emu/)
 
 #include "jvm.h"
+#include <applet/swkbd/software_keyboard_config.h>
 
 namespace skyline {
     std::string JniString::GetJString(JNIEnv *env, jstring jString) {
@@ -59,6 +60,9 @@ namespace skyline {
           initializeControllersId(environ->GetMethodID(instanceClass, "initializeControllers", "()V")),
           vibrateDeviceId(environ->GetMethodID(instanceClass, "vibrateDevice", "(I[J[I)V")),
           clearVibrationDeviceId(environ->GetMethodID(instanceClass, "clearVibrationDevice", "(I)V")),
+          showKeyboardId(environ->GetMethodID(instanceClass, "showKeyboard", "(Ljava/nio/ByteBuffer;Ljava/lang/String;)Lemu/skyline/applet/swkbd/SoftwareKeyboardDialog;")),
+          getKeyboardTextId(environ->GetMethodID(instanceClass, "getKeyboardText", "(Lemu/skyline/applet/swkbd/SoftwareKeyboardDialog;)Ljava/lang/String;")),
+          hideKeyboardId(environ->GetMethodID(instanceClass, "hideKeyboard", "(Lemu/skyline/applet/swkbd/SoftwareKeyboardDialog;)V")),
           getVersionCodeId(environ->GetMethodID(instanceClass, "getVersionCode", "()I")) {
         env.Initialize(environ);
     }
@@ -102,6 +106,32 @@ namespace skyline {
 
     void JvmManager::ClearVibrationDevice(jint index) {
         env->CallVoidMethod(instance, clearVibrationDeviceId, index);
+    }
+
+
+    jobject JvmManager::ShowKeyboard(service::applet::swkbd::KeyboardConfigVB &config, std::u16string initial_text) {
+        auto buff = env->NewDirectByteBuffer(&config, sizeof(service::applet::swkbd::KeyboardConfigVB));
+        auto str = env->NewString(reinterpret_cast<const jchar *>(initial_text.data()), static_cast<int>(initial_text.length()));
+        jobject localKeyboardDialog = env->CallObjectMethod(instance, showKeyboardId, buff, str);
+        env->DeleteLocalRef(buff);
+        env->DeleteLocalRef(str);
+        auto keyboardDialog = env->NewGlobalRef(localKeyboardDialog);
+        env->DeleteLocalRef(localKeyboardDialog);
+        return keyboardDialog;
+    }
+
+    std::u16string JvmManager::GetKeyboardText(jobject keyboardDialog) {
+        auto jString{reinterpret_cast<jstring>(env->CallObjectMethod(instance, getKeyboardTextId, keyboardDialog))};
+        auto jChars{env->GetStringChars(jString, nullptr)};
+        std::u16string input{jChars, jChars + env->GetStringLength(jString)};
+        env->ReleaseStringChars(jString, jChars);
+
+        return input;
+    }
+
+    void JvmManager::HideKeyboard(jobject keyboardDialog) {
+        env->CallVoidMethod(instance, hideKeyboardId, keyboardDialog);
+        env->DeleteGlobalRef(keyboardDialog);
     }
 
     i32 JvmManager::GetVersionCode() {
