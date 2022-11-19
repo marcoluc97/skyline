@@ -55,6 +55,8 @@ namespace skyline::service::am {
          */
         Result GetDisplayVersion(type::KSession &session, ipc::IpcRequest &request, ipc::IpcResponse &response);
 
+        Result GetSaveDataSize(type::KSession &session, ipc::IpcRequest &request, ipc::IpcResponse &response);
+        
         /**
          * @brief Returns if the application is running or not, always returns true
          * @url https://switchbrew.org/wiki/Applet_Manager_services#NotifyRunning
